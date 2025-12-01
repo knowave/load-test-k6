@@ -1,0 +1,21 @@
+{
+    "name": "k6-load-test",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "build": "webpack --config webpack.config.js",
+        "test": "yarn build && k6 run dist/load-test.js",
+        "test:quick": "yarn build && k6 run --duration 10s --vus 5 dist/load-test.js",
+        "test:stress": "yarn build && k6 run --duration 60s --vus 10 dist/load-test.js"
+    },
+    "devDependencies": {
+        "@types/k6": "^0.54.2",
+        "ts-loader": "^9.5.2",
+        "typescript": "^5.9.3",
+        "webpack": "^5.99.9",
+        "webpack-cli": "^6.0.1"
+    },
+    "dependencies": {
+        "k6": "^0.0.0"
+    }
+}
