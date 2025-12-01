@@ -1,3 +1,5 @@
+import { textSummary } from 'https://jslib.k6.io/k6-summary/0.0.1/index.js';
+import { htmlReport } from 'https://raw.githubusercontent.com/benc-uk/k6-reporter/2.4.0/dist/bundle.js';
 import { check, sleep } from 'k6';
 import http from 'k6/http';
 import { Counter, Rate, Trend } from 'k6/metrics';
@@ -12,10 +14,7 @@ const payloadDuration = new Trend('payload_duration');
 const errorRate = new Rate('errors');
 const requestCount = new Counter('total_requests');
 
-// Base URL
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
-
-// Test Options
 export const options: Options = {
     stages: [
         { duration: '10s', target: 5 }, // Ramp-up: 10초 동안 5명까지 증가
@@ -28,9 +27,7 @@ export const options: Options = {
     },
 };
 
-// Scenarios 별도 정의 (선택적 사용)
 export const scenarios = {
-    // 단일 시나리오로 모든 엔드포인트 테스트
     load_test: {
         executor: 'ramping-vus',
         startVUs: 0,
@@ -42,9 +39,7 @@ export const scenarios = {
     },
 };
 
-/**
- * Health Check 테스트
- */
+// Health Check 테스트
 function testHealthCheck(): void {
     const response = http.get(`${BASE_URL}/api/health`);
 
@@ -62,11 +57,9 @@ function testHealthCheck(): void {
     errorRate.add(!success);
 }
 
-/**
- * CPU 집약적 작업 테스트
- */
+// CPU 집약적 작업 테스트
 function testCpuIntensive(): void {
-    const n = Math.floor(Math.random() * 10) + 30; // 30~39 랜덤
+    const n = Math.floor(Math.random() * 10) + 30;
     const response = http.get(`${BASE_URL}/api/cpu-intensive?n=${n}`);
 
     cpuIntensiveDuration.add(response.timings.duration);
@@ -83,9 +76,7 @@ function testCpuIntensive(): void {
     errorRate.add(!success);
 }
 
-/**
- * 메모리 집약적 작업 테스트
- */
+// 메모리 집약적 작업 테스트
 function testMemoryIntensive(): void {
     const sizes = [10000, 50000, 100000];
     const size = sizes[Math.floor(Math.random() * sizes.length)];
@@ -105,9 +96,7 @@ function testMemoryIntensive(): void {
     errorRate.add(!success);
 }
 
-/**
- * I/O 지연 테스트
- */
+// I/O 지연 테스트
 function testIoDelay(): void {
     const delays = [50, 100, 200];
     const delay = delays[Math.floor(Math.random() * delays.length)];
@@ -127,9 +116,7 @@ function testIoDelay(): void {
     errorRate.add(!success);
 }
 
-/**
- * Echo POST 테스트
- */
+// Echo POST 테스트
 function testEcho(): void {
     const payload = JSON.stringify({
         userId: Math.floor(Math.random() * 1000),
@@ -158,9 +145,7 @@ function testEcho(): void {
     errorRate.add(!success);
 }
 
-/**
- * 가변 페이로드 테스트
- */
+// 가변 페이로드 테스트
 function testVariablePayload(): void {
     const sizes = ['small', 'medium', 'large'];
     const size = sizes[Math.floor(Math.random() * sizes.length)];
@@ -221,10 +206,19 @@ export function setup(): { startTime: number } {
     return { startTime: Date.now() };
 }
 
-/**
- * 테스트 종료 후 실행
- */
+// 테스트 종료 후 실행
 export function teardown(data: { startTime: number }): void {
     const duration = (Date.now() - data.startTime) / 1000;
     console.log(`\n✅ Load Test Completed in ${duration.toFixed(2)}s`);
+}
+
+// 테스트 결과 요약 - HTML 리포트 생성
+export function handleSummary(data: object): Record<string, string> {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+
+    return {
+        [`results/report-${timestamp}.html`]: htmlReport(data),
+        [`results/summary-${timestamp}.json`]: JSON.stringify(data, null, 2),
+        stdout: textSummary(data, { indent: ' ', enableColors: true }),
+    };
 }

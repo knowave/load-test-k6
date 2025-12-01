@@ -3,3 +3,6 @@ dist
 .env
 .DS_Store
 yarn.lock
+k6/node_modules
+k6/dist
+k6/results

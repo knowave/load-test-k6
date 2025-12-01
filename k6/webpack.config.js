@@ -21,7 +21,12 @@ module.exports = {
         extensions: ['.ts', '.js'],
     },
     target: 'web',
-    externals: /^k6(\/.*)?$/,
+    externals: [
+        // k6 모듈 external 처리
+        /^k6(\/.*)?$/,
+        // https:// URL external 처리 (k6 런타임에서 직접 로드)
+        /^https?:\/\/.*/,
+    ],
     optimization: {
         minimize: false,
     },
